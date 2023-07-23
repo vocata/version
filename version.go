@@ -1,27 +1,19 @@
 package version
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"code.byted.org/lang/gg/collection/set"
-	"code.byted.org/lang/gg/gslice"
-)
-
-var (
-	ErrUndefinedVersion = errors.New("undefined version")
 )
 
 type Stage struct {
 	Name   string
-	Number int
+	Number int64
 }
 
 func (t *Stage) String() string {
-	return t.Name + strconv.Itoa(t.Number)
+	return t.Name + strconv.FormatInt(t.Number, 10)
 }
 
 // IVersion .
@@ -31,16 +23,16 @@ type IVersion interface {
 	Public() string
 	Base() string
 	Local() string
-	Epoch() int
-	Release() []int
+	Epoch() int64
+	Release() []int64
 	Pre() *Stage
 	Post() *Stage
 	Dev() *Stage
 }
 
 type Version struct {
-	epoch   int
-	release []int
+	epoch   int64
+	release []int64
 	dev     *Stage
 	pre     *Stage
 	post    *Stage
@@ -52,20 +44,28 @@ type Version struct {
 func ParseVersion(version string) (*Version, error) {
 	match := irregularVersionRe.FindStringSubmatch(version)
 	if match == nil {
-		return nil, fmt.Errorf("'%s' is not a valid version", version)
+		return nil, fmt.Errorf("not a valid version '%s'", version)
 	}
 
-	stdVersion := &Version{}
-
+	stdVersion := new(Version)
 	if epoch := match[irregularVersionRe.SubexpIndex("epoch")]; epoch != "" {
-		stdVersion.epoch, _ = strconv.Atoi(epoch)
+		e, err := strconv.ParseInt(epoch, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("not a valid epoch, %s", err.Error())
+		}
+		stdVersion.epoch = e
 	}
 
 	if release := match[irregularVersionRe.SubexpIndex("release")]; release != "" {
-		stdVersion.release = gslice.Map(strings.Split(release, "."), func(r string) int {
-			digit, _ := strconv.Atoi(r)
-			return digit
-		})
+		var rel []int64
+		for _, r := range strings.Split(release, ".") {
+			digit, err := strconv.ParseInt(r, 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("not a valid release version, %s", err.Error())
+			}
+			rel = append(rel, digit)
+		}
+		stdVersion.release = rel
 	}
 
 	var preL, preN string
@@ -75,7 +75,11 @@ func ParseVersion(version string) (*Version, error) {
 	if n := match[irregularVersionRe.SubexpIndex("pre_n")]; n != "" {
 		preN = n
 	}
-	stdVersion.pre = parseLetterVersion(preL, preN)
+	pre, err := parseLetterVersion(preL, preN)
+	if err != nil {
+		return nil, fmt.Errorf("not a valid pre version, %s", err.Error())
+	}
+	stdVersion.pre = pre
 
 	var postL, postN string
 	if l := match[irregularVersionRe.SubexpIndex("post_l")]; l != "" {
@@ -86,7 +90,11 @@ func ParseVersion(version string) (*Version, error) {
 	} else if n2 := match[irregularVersionRe.SubexpIndex("post_n2")]; n2 != "" {
 		postN = n2
 	}
-	stdVersion.post = parseLetterVersion(postL, postN)
+	post, err := parseLetterVersion(postL, postN)
+	if err != nil {
+		return nil, fmt.Errorf("not a valid post version, %s", err.Error())
+	}
+	stdVersion.post = post
 
 	var devL, devN string
 	if l := match[irregularVersionRe.SubexpIndex("dev_l")]; l != "" {
@@ -95,7 +103,11 @@ func ParseVersion(version string) (*Version, error) {
 	if n := match[irregularVersionRe.SubexpIndex("dev_n")]; n != "" {
 		devN = n
 	}
-	stdVersion.dev = parseLetterVersion(devL, devN)
+	dev, err := parseLetterVersion(devL, devN)
+	if err != nil {
+		return nil, fmt.Errorf("not a valid dev version, %s", err.Error())
+	}
+	stdVersion.dev = dev
 
 	if local := match[irregularVersionRe.SubexpIndex("local")]; local != "" {
 		stdVersion.local = parseLocalVersion(local)
@@ -104,42 +116,49 @@ func ParseVersion(version string) (*Version, error) {
 	return stdVersion, nil
 }
 
-func parseLetterVersion(letter string, number string) *Stage {
+func parseLetterVersion(letter string, number string) (*Stage, error) {
 	if letter != "" {
 		letter = strings.ToLower(letter)
 		if letter == "alpha" {
 			letter = "a"
 		} else if letter == "beta" {
 			letter = "b"
-		} else if set.New("c", "pre", "preview").Contains(letter) {
+		} else if NewSet("c", "pre", "preview").Contains(letter) {
 			letter = "rc"
-		} else if set.New("rev", "r").Contains(letter) {
+		} else if NewSet("rev", "r").Contains(letter) {
 			letter = "post"
 		}
 
-		var num int
+		var num int64
 		if number != "" {
-			num, _ = strconv.Atoi(number)
+			n, err := strconv.ParseInt(number, 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			num = n
 		}
 
 		return &Stage{
 			Name:   letter,
 			Number: num,
-		}
+		}, nil
 	}
 
 	if number != "" {
 		// this is using the implicit post release syntax (e.g. 1.0-1)
 		letter = "post"
-		num, _ := strconv.Atoi(number)
+		num, err := strconv.ParseInt(number, 10, 64)
+		if err != nil {
+			return nil, err
+		}
 
 		return &Stage{
 			Name:   letter,
 			Number: num,
-		}
+		}, nil
 	}
 
-	return nil
+	return nil, nil
 }
 
 var localVersionSeparators = regexp.MustCompile(`[-_.]`)
@@ -163,10 +182,14 @@ func (v *Version) Complete() string {
 
 	// epoch
 	if v.epoch != 0 {
-		parts = append(parts, strconv.Itoa(v.epoch)+"!")
+		parts = append(parts, strconv.FormatInt(v.epoch, 10)+"!")
 	}
 	// release
-	parts = append(parts, strings.Join(gslice.Map(v.release, strconv.Itoa), "."))
+	var rel []string
+	for _, r := range v.release {
+		rel = append(rel, strconv.FormatInt(r, 10))
+	}
+	parts = append(parts, strings.Join(rel, "."))
 	// pre-release
 	if v.pre != nil {
 		parts = append(parts, v.pre.String())
@@ -198,10 +221,14 @@ func (v *Version) Base() string {
 
 	// epoch
 	if v.epoch != 0 {
-		parts = append(parts, strconv.Itoa(v.epoch)+"!")
+		parts = append(parts, strconv.FormatInt(v.epoch, 10)+"!")
 	}
 	// release
-	parts = append(parts, strings.Join(gslice.Map(v.release, strconv.Itoa), "."))
+	var rel []string
+	for _, r := range v.release {
+		rel = append(rel, strconv.FormatInt(r, 10))
+	}
+	parts = append(parts, strings.Join(rel, "."))
 
 	return strings.Join(parts, "")
 }
@@ -210,11 +237,11 @@ func (v *Version) Local() string {
 	return strings.Join(v.local, ".")
 }
 
-func (v *Version) Epoch() int {
+func (v *Version) Epoch() int64 {
 	return v.epoch
 }
 
-func (v *Version) Release() []int {
+func (v *Version) Release() []int64 {
 	return v.release
 }
 
@@ -265,11 +292,11 @@ func (v *LegacyVersion) Local() string {
 	return ""
 }
 
-func (v *LegacyVersion) Epoch() int {
+func (v *LegacyVersion) Epoch() int64 {
 	return -1
 }
 
-func (v *LegacyVersion) Release() []int {
+func (v *LegacyVersion) Release() []int64 {
 	return nil
 }
 

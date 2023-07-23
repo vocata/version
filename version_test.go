@@ -413,7 +413,7 @@ func TestVersionBase(t *testing.T) {
 
 var versionEpochs = []struct {
 	version string
-	epoch   int
+	epoch   int64
 }{
 	{"1.0", 0},
 	{"1.0.dev0", 0},
@@ -461,37 +461,37 @@ func TestVersionEpoch(t *testing.T) {
 
 var versionReleases = []struct {
 	version string
-	release []int
+	release []int64
 }{
-	{"1.0", []int{1, 0}},
-	{"1.0.dev0", []int{1, 0}},
-	{"1.0.dev6", []int{1, 0}},
-	{"1.0a1", []int{1, 0}},
-	{"1.0a1.post5", []int{1, 0}},
-	{"1.0a1.post5.dev6", []int{1, 0}},
-	{"1.0rc4", []int{1, 0}},
-	{"1.0.post5", []int{1, 0}},
-	{"1!1.0", []int{1, 0}},
-	{"1!1.0.dev6", []int{1, 0}},
-	{"1!1.0a1", []int{1, 0}},
-	{"1!1.0a1.post5", []int{1, 0}},
-	{"1!1.0a1.post5.dev6", []int{1, 0}},
-	{"1!1.0rc4", []int{1, 0}},
-	{"1!1.0.post5", []int{1, 0}},
-	{"1.0+deadbeef", []int{1, 0}},
-	{"1.0.dev6+deadbeef", []int{1, 0}},
-	{"1.0a1+deadbeef", []int{1, 0}},
-	{"1.0a1.post5+deadbeef", []int{1, 0}},
-	{"1.0a1.post5.dev6+deadbeef", []int{1, 0}},
-	{"1.0rc4+deadbeef", []int{1, 0}},
-	{"1.0.post5+deadbeef", []int{1, 0}},
-	{"1!1.0+deadbeef", []int{1, 0}},
-	{"1!1.0.dev6+deadbeef", []int{1, 0}},
-	{"1!1.0a1+deadbeef", []int{1, 0}},
-	{"1!1.0a1.post5+deadbeef", []int{1, 0}},
-	{"1!1.0a1.post5.dev6+deadbeef", []int{1, 0}},
-	{"1!1.0rc4+deadbeef", []int{1, 0}},
-	{"1!1.0.post5+deadbeef", []int{1, 0}},
+	{"1.0", []int64{1, 0}},
+	{"1.0.dev0", []int64{1, 0}},
+	{"1.0.dev6", []int64{1, 0}},
+	{"1.0a1", []int64{1, 0}},
+	{"1.0a1.post5", []int64{1, 0}},
+	{"1.0a1.post5.dev6", []int64{1, 0}},
+	{"1.0rc4", []int64{1, 0}},
+	{"1.0.post5", []int64{1, 0}},
+	{"1!1.0", []int64{1, 0}},
+	{"1!1.0.dev6", []int64{1, 0}},
+	{"1!1.0a1", []int64{1, 0}},
+	{"1!1.0a1.post5", []int64{1, 0}},
+	{"1!1.0a1.post5.dev6", []int64{1, 0}},
+	{"1!1.0rc4", []int64{1, 0}},
+	{"1!1.0.post5", []int64{1, 0}},
+	{"1.0+deadbeef", []int64{1, 0}},
+	{"1.0.dev6+deadbeef", []int64{1, 0}},
+	{"1.0a1+deadbeef", []int64{1, 0}},
+	{"1.0a1.post5+deadbeef", []int64{1, 0}},
+	{"1.0a1.post5.dev6+deadbeef", []int64{1, 0}},
+	{"1.0rc4+deadbeef", []int64{1, 0}},
+	{"1.0.post5+deadbeef", []int64{1, 0}},
+	{"1!1.0+deadbeef", []int64{1, 0}},
+	{"1!1.0.dev6+deadbeef", []int64{1, 0}},
+	{"1!1.0a1+deadbeef", []int64{1, 0}},
+	{"1!1.0a1.post5+deadbeef", []int64{1, 0}},
+	{"1!1.0a1.post5.dev6+deadbeef", []int64{1, 0}},
+	{"1!1.0rc4+deadbeef", []int64{1, 0}},
+	{"1!1.0.post5+deadbeef", []int64{1, 0}},
 }
 
 func TestVersionRelease(t *testing.T) {

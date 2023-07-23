@@ -1,11 +1,14 @@
 package version
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
 	"unicode"
 )
+
+var ErrUndefinedVersion = errors.New("undefined version")
 
 type PyPiPackage struct {
 	name string
@@ -68,7 +71,11 @@ func (p *PyPiPackage) EvaluateVersion(filename string) (string, error) {
 			version = version[:scope[0]]
 		}
 
-		v, _ := Parse(version)
+		v, err := Parse(version)
+		if err != nil {
+			return "", fmt.Errorf("%w, not a valid version '%s'", ErrUndefinedVersion, version)
+		}
+
 		return v.Complete(), nil // return detailed version
 	} else if legacyExt.Contains(ext) { // rules are casual and used to extract as many versions as possible from filenames
 		version := p.extractVersionFromLegacyFragment(fragment)
@@ -77,7 +84,11 @@ func (p *PyPiPackage) EvaluateVersion(filename string) (string, error) {
 			return "", fmt.Errorf("%w, version not found in '%s'", ErrUndefinedVersion, filename)
 		}
 
-		v, _ := Parse(version)
+		v, err := Parse(version)
+		if err != nil {
+			return "", fmt.Errorf("%w, not a valid version '%s'", ErrUndefinedVersion, version)
+		}
+
 		return v.Base(), nil // return brief version
 	} else {
 		return "", fmt.Errorf("%w, unsupported extension '%s'", ErrUndefinedVersion, ext)
