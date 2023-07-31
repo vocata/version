@@ -48,7 +48,7 @@ func (p *PyPiPackage) String() string {
 func (p *PyPiPackage) EvaluateVersion(filename string) (string, error) {
 	fragment, ext := splitFilename(filename)
 
-	if ext = strings.ToLower(ext); standardExt.Contains(ext) { // keep the same as pip
+	if ext = strings.ToLower(ext); StandardExt.Contains(ext) { // keep the same as pip
 		var version string
 		if ext == ExtWhl {
 			whl, err := NewWheel(filename)
@@ -77,7 +77,7 @@ func (p *PyPiPackage) EvaluateVersion(filename string) (string, error) {
 		}
 
 		return v.Complete(), nil // return detailed version
-	} else if legacyExt.Contains(ext) { // rules are casual and used to extract as many versions as possible from filenames
+	} else if LegacyExt.Contains(ext) { // rules are casual and used to extract as many versions as possible from filenames
 		version := p.extractVersionFromLegacyFragment(fragment)
 
 		if version == "" {

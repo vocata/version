@@ -32,8 +32,8 @@ const (
 )
 
 var (
-	legacyExt   = NewSet(ExtDeb, ExtDmg, ExtEgg, ExtExe, ExtMsi, ExtRpm)
-	standardExt = NewSet(ExtWhl, ExtZip, ExtGz, ExtTgz, ExtTar, ExtBz2, ExtTbz, ExtXz, ExtTxz, ExtTlz, ExtLz, ExtLzma)
+	LegacyExt   = NewSet(ExtDeb, ExtDmg, ExtEgg, ExtExe, ExtMsi, ExtRpm)
+	StandardExt = NewSet(ExtWhl, ExtZip, ExtGz, ExtTgz, ExtTar, ExtBz2, ExtTbz, ExtXz, ExtTxz, ExtTlz, ExtLz, ExtLzma)
 )
 
 func splitFilename(filename string) (string, string) {
