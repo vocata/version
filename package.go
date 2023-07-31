@@ -95,8 +95,12 @@ func (p *PyPiPackage) EvaluateVersion(filename string) (string, error) {
 	}
 }
 
-// extractVersionFromFragment extracts version from fragment of source distribution, the name of
-// sdist is defined in pep625. For more details: https://peps.python.org/pep-0625/.
+// extractVersionFromFragment extracts version from fragment of source distribution, the filename
+// of 'sdist' defined in pep625. For more details: https://peps.python.org/pep-0625/. In addition,
+// this method can also extract version from filename of obsolete "bdist_dumb" described in pep527.
+// The 'bdist_dumb' will produce files named something like package-1.0.macosx-10.11-x86_64.tar.gz,
+// and with the legacy pre PEP 440 versions, 1.0-macosx-10.11-x86_64 is a valid, for more detail,
+// see https://peps.python.org/pep-0527/#bdist-dumb and test cases.
 func (p *PyPiPackage) extractVersionFromFragment(fragment string) string {
 	for i, c := range fragment {
 		if c != '-' {
