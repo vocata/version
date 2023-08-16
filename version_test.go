@@ -296,7 +296,7 @@ func TestVersionString(t *testing.T) {
 			if v.Complete() != str.expected {
 				t.Errorf("version: %s, %s != %s", str.version, v.Complete(), str.expected)
 			}
-			if repr, expected := fmt.Sprint(v), fmt.Sprintf("IVersion<%s>", str.expected); repr != expected {
+			if repr, expected := fmt.Sprint(v), fmt.Sprintf("Version<%s>", str.expected); repr != expected {
 				t.Errorf("version: %s, %s(actual) != %s(expected)", str.version, repr, expected)
 			}
 		})

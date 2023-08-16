@@ -10,7 +10,7 @@ import (
 
 var ErrUndefinedVersion = errors.New("undefined version")
 
-type PyPiPackage struct {
+type Package struct {
 	name string
 }
 
@@ -28,24 +28,28 @@ func CanonicalizeLegacyPackage(name string) string {
 	return strings.ToLower(irregularLegacyPackageLetters.ReplaceAllString(name, "-"))
 }
 
-func NewPackage(name string) (*PyPiPackage, error) {
+func NewPackage(name string) (*Package, error) {
 	name = CanonicalizePackage(name)
 	if !packageNameRe.MatchString(name) {
 		return nil, fmt.Errorf("invalid package name '%s'", name)
 	}
 
-	return &PyPiPackage{
+	return &Package{
 		name: name,
 	}, nil
 }
 
-func (p *PyPiPackage) String() string {
+func (p *Package) String() string {
+	return fmt.Sprintf("Pakcage<%s>", p.name)
+}
+
+func (p *Package) Name() string {
 	return p.name
 }
 
 // EvaluateVersion extracts version from filename of current package, original implementations can
 // refer to https://github.com/pypa/pip/blob/23.0.1/src/pip/_internal/index/package_finder.py#L108.
-func (p *PyPiPackage) EvaluateVersion(filename string) (string, error) {
+func (p *Package) EvaluateVersion(filename string) (string, error) {
 	fragment, ext := splitFilename(filename)
 
 	if ext = strings.ToLower(ext); StandardExt.Contains(ext) { // keep the same as pip
@@ -101,7 +105,7 @@ func (p *PyPiPackage) EvaluateVersion(filename string) (string, error) {
 // The 'bdist_dumb' will produce files named something like package-1.0.macosx-10.11-x86_64.tar.gz,
 // and with the legacy pre PEP 440 versions, 1.0-macosx-10.11-x86_64 is a valid, for more detail,
 // see https://peps.python.org/pep-0527/#bdist-dumb and test cases.
-func (p *PyPiPackage) extractVersionFromFragment(fragment string) string {
+func (p *Package) extractVersionFromFragment(fragment string) string {
 	for i, c := range fragment {
 		if c != '-' {
 			continue
@@ -117,7 +121,7 @@ func (p *PyPiPackage) extractVersionFromFragment(fragment string) string {
 // extractVersionFromLegacyFragment extracts version from fragment of legacy distribution such as
 // rpm, deb, exe etc. Since there is no officially defined specification, this method tries the
 // best to extract the version number from the fragment using loose rules.
-func (p *PyPiPackage) extractVersionFromLegacyFragment(fragment string) string {
+func (p *Package) extractVersionFromLegacyFragment(fragment string) string {
 	for i, c := range fragment {
 		if unicode.IsLetter(c) || unicode.IsDigit(c) {
 			continue

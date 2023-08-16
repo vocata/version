@@ -173,7 +173,7 @@ func parseLocalVersion(local string) []string {
 }
 
 func (v *Version) String() string {
-	return fmt.Sprintf("IVersion<%s>", v.Complete())
+	return fmt.Sprintf("Version<%s>", v.Complete())
 }
 
 // Complete returns complete version.
