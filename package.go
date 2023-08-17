@@ -1,14 +1,11 @@
 package version
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
 	"unicode"
 )
-
-var ErrUndefinedVersion = errors.New("undefined version")
 
 type Package struct {
 	name string
@@ -31,7 +28,7 @@ func CanonicalizeLegacyPackage(name string) string {
 func NewPackage(name string) (*Package, error) {
 	name = CanonicalizePackage(name)
 	if !packageNameRe.MatchString(name) {
-		return nil, fmt.Errorf("invalid package name '%s'", name)
+		return nil, fmt.Errorf("illegal package name '%s'", name)
 	}
 
 	return &Package{
@@ -40,7 +37,7 @@ func NewPackage(name string) (*Package, error) {
 }
 
 func (p *Package) String() string {
-	return fmt.Sprintf("Pakcage<%s>", p.name)
+	return fmt.Sprintf("Package<%s>", p.name)
 }
 
 func (p *Package) Name() string {
@@ -57,17 +54,17 @@ func (p *Package) EvaluateVersion(filename string) (string, error) {
 		if ext == ExtWhl {
 			whl, err := NewWheel(filename)
 			if err != nil {
-				return "", fmt.Errorf("%w, %s", ErrUndefinedVersion, err.Error())
+				return "", err
 			}
 			if CanonicalizePackage(whl.Name) != p.name {
-				return "", fmt.Errorf("%w, package name in '%s' not matched", ErrUndefinedVersion, filename)
+				return "", fmt.Errorf("package name '%s' doesn't match that in filename '%s'", p.name, filename)
 			}
 			version = whl.Version
 		}
 
 		if version == "" {
 			if version = p.extractVersionFromFragment(fragment); version == "" {
-				return "", fmt.Errorf("%w, version not found in '%s'", ErrUndefinedVersion, filename)
+				return "", fmt.Errorf("version not found in '%s'", filename)
 			}
 		}
 
@@ -77,7 +74,7 @@ func (p *Package) EvaluateVersion(filename string) (string, error) {
 
 		v, err := Parse(version)
 		if err != nil {
-			return "", fmt.Errorf("%w, not a valid version '%s'", ErrUndefinedVersion, version)
+			return "", fmt.Errorf("illegal version '%s'", version)
 		}
 
 		return v.Complete(), nil // return detailed version
@@ -85,17 +82,17 @@ func (p *Package) EvaluateVersion(filename string) (string, error) {
 		version := p.extractVersionFromLegacyFragment(fragment)
 
 		if version == "" {
-			return "", fmt.Errorf("%w, version not found in '%s'", ErrUndefinedVersion, filename)
+			return "", fmt.Errorf("version not found in '%s'", filename)
 		}
 
 		v, err := Parse(version)
 		if err != nil {
-			return "", fmt.Errorf("%w, not a valid version '%s'", ErrUndefinedVersion, version)
+			return "", fmt.Errorf("illegal version '%s'", version)
 		}
 
 		return v.Base(), nil // return brief version
 	} else {
-		return "", fmt.Errorf("%w, unsupported extension '%s'", ErrUndefinedVersion, ext)
+		return "", fmt.Errorf("unsupported file extension '%s'", ext)
 	}
 }
 
@@ -103,8 +100,8 @@ func (p *Package) EvaluateVersion(filename string) (string, error) {
 // of 'sdist' defined in pep625. For more details: https://peps.python.org/pep-0625/. In addition,
 // this method can also extract version from filename of obsolete "bdist_dumb" described in pep527.
 // The 'bdist_dumb' will produce files named something like package-1.0.macosx-10.11-x86_64.tar.gz,
-// and with the legacy pre PEP 440 versions, 1.0-macosx-10.11-x86_64 is a valid, for more detail,
-// see https://peps.python.org/pep-0527/#bdist-dumb and test cases.
+// and with the legacy pre PEP 440 versions, 1.0-macosx-10.11-x86_64 is a legal version, for more
+// detail, see https://peps.python.org/pep-0527/#bdist-dumb and test cases.
 func (p *Package) extractVersionFromFragment(fragment string) string {
 	for i, c := range fragment {
 		if c != '-' {
@@ -150,7 +147,7 @@ type Wheel struct {
 func NewWheel(filename string) (*Wheel, error) {
 	match := wheelFilenameRe.FindStringSubmatch(filename)
 	if match == nil {
-		return nil, fmt.Errorf("'%s' is not a valid wheel filename", filename)
+		return nil, fmt.Errorf("illegal wheel filename '%s'", filename)
 	}
 
 	return &Wheel{
